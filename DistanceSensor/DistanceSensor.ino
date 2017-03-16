@@ -55,7 +55,7 @@ void setup()
 
 void presentation() {
   // Send the sketch version information to the gateway and Controller
-  sendSketchInfo("Distance Sensor X", "1.0");
+  sendSketchInfo("Distance Sensor", "1.0");
 
   // Register all sensors to gw (they will be created as child devices)
   present(CHILD_ID, S_DISTANCE);
