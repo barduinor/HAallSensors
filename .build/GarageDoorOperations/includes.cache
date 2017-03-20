@@ -1,0 +1,42 @@
+[
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino"
+  },
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/variants/standard"
+  },
+  {
+    "Sourcefile": "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/.build/GarageDoorOperations/sketch/GarageDoorOperations.ino.cpp",
+    "Include": "SPI.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/SPI/src"
+  },
+  {
+    "Sourcefile": "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/.build/GarageDoorOperations/sketch/GarageDoorOperations.ino.cpp",
+    "Include": "MySensors.h",
+    "Includepath": "/Users/rvb/Documents/Arduino/libraries/MySensors"
+  },
+  {
+    "Sourcefile": "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/.build/GarageDoorOperations/sketch/GarageDoorOperations.ino.cpp",
+    "Include": "NewPing.h",
+    "Includepath": "/Users/rvb/Documents/Arduino/libraries/NewPing"
+  },
+  {
+    "Sourcefile": "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/.build/GarageDoorOperations/sketch/GarageDoorOperations.ino.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/SPI/src/SPI.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Users/rvb/Documents/Arduino/libraries/NewPing/NewPing.cpp",
+    "Include": "",
+    "Includepath": ""
+  }
+]

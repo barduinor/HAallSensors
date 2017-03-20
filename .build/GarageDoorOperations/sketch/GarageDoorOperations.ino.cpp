@@ -1,3 +1,6 @@
+#include <Arduino.h>
+#line 1 "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/GarageDoorOperations/GarageDoorOperations.ino"
+#line 1 "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/GarageDoorOperations/GarageDoorOperations.ino"
 /**
    The MySensors Arduino library handles the wireless radio link and protocol
    between your home built sensors/actuators and HA controller of choice.
@@ -44,13 +47,13 @@
 
 #define TRIGGER_PIN  4  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     7  // Arduino pin tied to echo pin on the ultrasonic sensor.
-#define MAX_DISTANCE 1000 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+#define MAX_DISTANCE 300 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
-#define PING_DELAY_OPERATING 300 // ms wait ping time while door is operating
-#define PING_DELAY_IDLE 2*1000  // ms wait ping time while door is idle
+#define PING_DELAY_OPERATING 500 // ms wait ping time while door is operating
+#define PING_DELAY_IDLE 10*1000  // ms wait ping time while door is idle
 
 #define DISTANCE_OPEN 20 // max distance to consider closed
-#define DISTANCE_CLOSE 250 // min distance to consider open
+#define DISTANCE_CLOSE 190 // min distance to consider open
 
 #define RELAY_PIN 3 //Aruino pin to control relay to trigger door
 #define RELAY_ON 1
@@ -63,8 +66,6 @@ NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and
 MyMessage msgDoor(CHILD_DOOR_ID, V_PERCENTAGE); // Door position
 //  MyMessage msgLight(CHILD_LIGHT_ID, V_LIGHT); // Light Activate
 MyMessage msgSwitch(CHILD_SWITCH_ID, V_DIRECTION); // Switch Activate 0 reset, 1 door, 2 light
-MyMessage msgDist(CHILD_LIGHT_ID, V_DISTANCE);
-
 
 int lastDist;
 bool metric = true;
@@ -72,6 +73,19 @@ int repeatCounter = 0;
 bool isIdle = true;
 int doorPosition = 100; //door position 0 open 100 closed
 
+#line 73 "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/GarageDoorOperations/GarageDoorOperations.ino"
+void setup();
+#line 78 "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/GarageDoorOperations/GarageDoorOperations.ino"
+void presentation();
+#line 89 "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/GarageDoorOperations/GarageDoorOperations.ino"
+void loop();
+#line 137 "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/GarageDoorOperations/GarageDoorOperations.ino"
+void receive(const MyMessage &message);
+#line 158 "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/GarageDoorOperations/GarageDoorOperations.ino"
+void doorActivate();
+#line 167 "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/GarageDoorOperations/GarageDoorOperations.ino"
+void lightActivate();
+#line 73 "/Users/rvb/Documents/Arduino/Barduino/HAallSensors/GarageDoorOperations/GarageDoorOperations.ino"
 void setup()
 {
   metric = getControllerConfig().isMetric;
@@ -86,17 +100,12 @@ void presentation() {
   //  present(CHILD_LIGHT_ID, S_BINARY, "Light Message");
   present(CHILD_SWITCH_ID, S_DOOR, "Switch message");
 
-  present(CHILD_LIGHT_ID, S_DISTANCE, "Distance cm");
-
 }
 
 void loop()
 {
 
   int dist = metric ? sonar.ping_cm() : sonar.ping_in();
-  
-  send(msgDist.set(dist));
-  
   if (dist < DISTANCE_OPEN)
     dist = DISTANCE_OPEN;
   else if (dist > DISTANCE_CLOSE)
@@ -110,7 +119,6 @@ void loop()
 
 
     send(msgDoor.set(doorPosition));
-
 
     repeatCounter = 0;
 
@@ -164,7 +172,7 @@ void receive(const MyMessage &message) {
 }
 
 void doorActivate() {
-  send(msgSwitch.set(1));
+      send(msgSwitch.set(1));
   digitalWrite(RELAY_PIN, RELAY_ON);
   delay(RELAY_DELAY_DOOR);
   digitalWrite(RELAY_PIN, RELAY_OFF);
@@ -173,12 +181,13 @@ void doorActivate() {
 }
 
 void lightActivate() {
-  send(msgSwitch.set(2));
+      send(msgSwitch.set(2));
   digitalWrite(RELAY_PIN, RELAY_ON);
   delay(RELAY_DELAY_LIGHT);
   digitalWrite(RELAY_PIN, RELAY_OFF);
   repeatCounter = 0;
 }
+
 
 
 
