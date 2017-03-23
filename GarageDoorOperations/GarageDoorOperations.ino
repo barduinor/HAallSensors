@@ -42,12 +42,15 @@
 #define CHILD_LIGHT_ID 2 // Light activate message
 #define CHILD_SWITCH_ID 3 //  Switch/Button activate message
 
+#define CHILD_INDICATOR_ID 4 //  Remote indicator ld for garage door
+#define REMOTE_DESTINATION 20 // Remote sensor is
+
 #define TRIGGER_PIN  4  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     7  // Arduino pin tied to echo pin on the ultrasonic sensor.
 #define MAX_DISTANCE 300 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
-#define PING_DELAY_OPERATING 300 // ms wait ping time while door is operating
-#define PING_DELAY_IDLE 2*1000  // ms wait ping time while door is idle
+#define PING_DELAY_OPERATING 500 // ms wait ping time while door is operating
+#define PING_DELAY_IDLE 2*60*1000  // ms wait ping time while door is idle
 
 #define DISTANCE_OPEN 20 // max distance to consider closed
 #define DISTANCE_CLOSE 250 // min distance to consider open
@@ -61,7 +64,10 @@ NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and
 
 MyMessage msgDoor(CHILD_DOOR_ID, V_PERCENTAGE); // Door position
 MyMessage msgSwitch(CHILD_SWITCH_ID, V_STATUS); // Switch Activate 0 Idle 1 activate
-MyMessage msgDist(CHILD_LIGHT_ID, V_DISTANCE);
+MyMessage msgDist(CHILD_LIGHT_ID, V_DISTANCE);  // Control distance in cm from ping sensor
+
+MyMessage msgIndicator(CHILD_INDICATOR_ID, V_STATUS); // message to remote indicator
+
 
 
 int lastDist;
@@ -73,6 +79,8 @@ int doorPosition = 100; //door position 0 open 100 closed
 void setup()
 {
   metric = getControllerConfig().isMetric;
+  pinMode(RELAY_PIN, OUTPUT);
+
 }
 
 void presentation() {
@@ -81,11 +89,13 @@ void presentation() {
 
   // Register all sensors to gw (they will be created as child devices)
 
-  present(CHILD_DOOR_ID, S_DISTANCE, "Door position");
+  present(CHILD_DOOR_ID, S_COVER, "Door position");
 
   present(CHILD_SWITCH_ID, S_BINARY, "Switch");
 
   present(CHILD_LIGHT_ID, S_DISTANCE, "Distance cm");
+
+  msgIndicator.setDestination(REMOTE_DESTINATION);
 
 }
 
@@ -116,23 +126,32 @@ void loop()
   } else {
     repeatCounter++;
   }
-  sendBatteryLevel(100);
+
+
+  if (doorPosition == 100) {
+    send(msgIndicator.set(false)); // closed
+//    Serial.println("\t\t sent closed");
+  } else {
+    send(msgIndicator.set(true)); // open
+//    Serial.println("\t\t sent Open");
+  }
 
   if (repeatCounter > 10) {
     isIdle = true;
     send(msgSwitch.set(0));
+    sendBatteryLevel(100);
   }
 
-  Serial.print("Ping: ");
-  Serial.print(dist); // Convert ping time to distance in cm and print result (0 = outside set distance range)
-  Serial.print(metric ? " cm " : " in ");
-  Serial.print("Door Position ");
-  Serial.print(doorPosition);
-  Serial.print(" Counter: ");
-  Serial.print(repeatCounter);
-  Serial.print(" Is Idle:");
-  Serial.print(isIdle);
-  Serial.println();
+  //  Serial.print("Ping: ");
+  //  Serial.print(dist); // Convert ping time to distance in cm and print result (0 = outside set distance range)
+  //  Serial.print(metric ? " cm " : " in ");
+  //  Serial.print("Door Position ");
+  //  Serial.print(doorPosition);
+  //  Serial.print(" Counter: ");
+  //  Serial.print(repeatCounter);
+  //  Serial.print(" Is Idle:");
+  //  Serial.print(isIdle);
+  //  Serial.println();
 
   if (isIdle) {
     wait(PING_DELAY_IDLE, 1, V_STATUS);
@@ -143,16 +162,13 @@ void loop()
 
 void receive(const MyMessage &message) {
 
-  if (message.isAck()) {
-    Serial.println("This is an ack from gateway");
-  }
-
   if (message.type == V_STATUS) {
     bool isActivated = message.getBool();
-    Serial.print("Got Message:");
-    Serial.print(isActivated);
-    Serial.println();
+    //    Serial.print("Got Message:");
+    //    Serial.print(isActivated);
+    //    Serial.println();
     if (isActivated) {
+      send(msgSwitch.set(1));
       doorActivate();
       send(msgSwitch.set(0));
     }
@@ -161,7 +177,7 @@ void receive(const MyMessage &message) {
 }
 
 void doorActivate() {
-  send(msgSwitch.set(1));
+
   digitalWrite(RELAY_PIN, RELAY_ON);
   delay(RELAY_DELAY_DOOR);
   digitalWrite(RELAY_PIN, RELAY_OFF);
@@ -171,13 +187,13 @@ void doorActivate() {
 
 /*
 
-void lightActivate() {
+  void lightActivate() {
   send(msgSwitch.set(2));
   digitalWrite(RELAY_PIN, RELAY_ON);
   delay(RELAY_DELAY_DOOR);
   digitalWrite(RELAY_PIN, RELAY_OFF);
   repeatCounter = 0;
-}
+  }
 
 */
 
