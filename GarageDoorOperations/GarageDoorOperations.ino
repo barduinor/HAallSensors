@@ -50,7 +50,7 @@
 #define MAX_DISTANCE 300 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
 #define PING_DELAY_OPERATING 500 // ms wait ping time while door is operating
-#define PING_DELAY_IDLE 2*60*1000  // ms wait ping time while door is idle
+#define PING_DELAY_IDLE 5000  // ms wait ping time while door is idle
 
 #define DISTANCE_OPEN 20 // max distance to consider closed
 #define DISTANCE_CLOSE 250 // min distance to consider open
@@ -70,7 +70,7 @@ MyMessage msgIndicator(CHILD_INDICATOR_ID, V_STATUS); // message to remote indic
 
 
 
-int lastDist;
+int lastDoorPosition = 0;
 bool metric = true;
 int repeatCounter = 0;
 bool isIdle = true;
@@ -101,46 +101,42 @@ void presentation() {
 
 void loop()
 {
-
   int dist = metric ? sonar.ping_cm() : sonar.ping_in();
-
-  send(msgDist.set(dist));
+  int mapDist = 0;
 
   if (dist < DISTANCE_OPEN)
-    dist = DISTANCE_OPEN;
+    mapDist = DISTANCE_OPEN;
   else if (dist > DISTANCE_CLOSE)
-    dist = DISTANCE_CLOSE;
+    mapDist = DISTANCE_CLOSE;
+  else
+    mapDist = dist;
 
-  doorPosition = map(dist, DISTANCE_OPEN, DISTANCE_CLOSE, 0, 100);
+  doorPosition = map(mapDist, DISTANCE_OPEN, DISTANCE_CLOSE, 0, 100);
 
-  if (doorPosition != lastDist) {
-
-    lastDist = doorPosition;
-
-
-    send(msgDoor.set(doorPosition));
-
-
+  if (doorPosition != lastDoorPosition) {
+    lastDoorPosition = doorPosition;
     repeatCounter = 0;
-
+    isIdle = false;
+    send(msgDist.set(dist));
+    send(msgDoor.set(doorPosition));
   } else {
     repeatCounter++;
   }
 
 
-  if (doorPosition == 100) {
+
+  if (doorPosition >= 100) {
     send(msgIndicator.set(false)); // closed
-//    Serial.println("\t\t sent closed");
+    //Serial.println("\t\t sent closed");
   } else {
     send(msgIndicator.set(true)); // open
-//    Serial.println("\t\t sent Open");
+    //Serial.println("\t\t sent Open");
   }
 
   if (repeatCounter > 10) {
     isIdle = true;
-    send(msgSwitch.set(0));
-    sendBatteryLevel(100);
   }
+
 
   //  Serial.print("Ping: ");
   //  Serial.print(dist); // Convert ping time to distance in cm and print result (0 = outside set distance range)
@@ -164,15 +160,14 @@ void receive(const MyMessage &message) {
 
   if (message.type == V_STATUS) {
     bool isActivated = message.getBool();
-    //    Serial.print("Got Message:");
-    //    Serial.print(isActivated);
-    //    Serial.println();
+
     if (isActivated) {
       send(msgSwitch.set(1));
       doorActivate();
       send(msgSwitch.set(0));
     }
-
+    isIdle = false;
+    repeatCounter = 0;
   }
 }
 
@@ -181,8 +176,6 @@ void doorActivate() {
   digitalWrite(RELAY_PIN, RELAY_ON);
   delay(RELAY_DELAY_DOOR);
   digitalWrite(RELAY_PIN, RELAY_OFF);
-  isIdle = !isIdle;
-  repeatCounter = 0;
 }
 
 /*
