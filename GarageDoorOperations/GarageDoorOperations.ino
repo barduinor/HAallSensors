@@ -75,6 +75,7 @@ bool metric = true;
 int repeatCounter = 0;
 bool isIdle = true;
 int doorPosition = 100; //door position 0 open 100 closed
+bool doInit = true;
 
 void setup()
 {
@@ -97,12 +98,24 @@ void presentation() {
 
   msgIndicator.setDestination(REMOTE_DESTINATION);
 
+  
+
 }
 
 void loop()
 {
   int dist = metric ? sonar.ping_cm() : sonar.ping_in();
   int mapDist = 0;
+
+  if(doInit){
+      send(msgSwitch.set(0));
+      doInit = false;
+    }
+  
+
+//  Serial.print("Distance: ");
+//  Serial.print(dist);
+//  Serial.println();
 
   if (dist < DISTANCE_OPEN)
     mapDist = DISTANCE_OPEN;
@@ -112,6 +125,10 @@ void loop()
     mapDist = dist;
 
   doorPosition = map(mapDist, DISTANCE_OPEN, DISTANCE_CLOSE, 0, 100);
+
+//  Serial.print("Position: ");
+//  Serial.print(doorPosition);
+//  Serial.println();
 
   if (doorPosition != lastDoorPosition) {
     lastDoorPosition = doorPosition;
